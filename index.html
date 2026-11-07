@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#17345f">
+<meta name="description" content="Create and download printable Tour Notes.">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" href="./icons/tour-note.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="./icons/tour-note.svg">
+<title>Tour Note Generator</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<style>
+:root{--navy:#17345f;--blue:#244b7d;--bg:#f2f5fa;--line:#222}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);font-family:Arial,sans-serif;color:#172033}
+header{background:var(--navy);color:white;padding:18px 5%;display:flex;justify-content:space-between;align-items:center}
+header h1{font-size:20px;margin:0}header span{font-size:12px;opacity:.85}
+main{max-width:1100px;margin:28px auto;padding:0 16px}
+.panel{background:#fff;border-radius:12px;padding:22px;margin-bottom:18px;box-shadow:0 4px 18px #152d5010}
+h2{font-size:17px;margin:0 0 16px;color:var(--navy)}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+label{font-size:12px;font-weight:700;color:#42536b;display:block;margin-bottom:6px}
+input,select,textarea{width:100%;border:1px solid #d5ddeb;border-radius:7px;padding:11px;font:14px Arial;background:#fbfcff}
+input:focus,select:focus{outline:2px solid #b8cbea;border-color:#6289bb}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+button{border:0;border-radius:8px;padding:11px 17px;font-weight:700;cursor:pointer}
+.primary{background:var(--navy);color:#fff}.secondary{background:#e8eef7;color:var(--navy)}.danger{background:#fff0f0;color:#a12b2b}
+.entry{border:1px solid #dce3ee;border-radius:9px;padding:15px;margin:12px 0}
+.entry-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;font-weight:700;color:var(--navy)}
+.entry-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.entry-type{max-width:260px}.hidden-field{display:none!important}
+.wide{grid-column:span 2}
+.note{font-size:12px;color:#64748b;line-height:1.5}
+
+#pdfArea{position:absolute;left:-10000px;top:0;width:980px;background:white;color:#000}
+.paper{width:980px;padding:0;font-family:Arial,sans-serif;color:#000;background:#fff;border:1.5px solid #000;margin:0 auto;box-sizing:border-box}
+.paper h3{text-align:center;font-size:15px;line-height:1.25;margin:0;padding:6px 6px 4px;text-transform:uppercase;border-bottom:0;font-weight:bold}
+.paper .meta{display:flex;justify-content:center;align-items:center;gap:140px;font-weight:bold;padding:4px 12px;font-size:13px;border-bottom:1.5px solid #000;min-height:26px;text-align:center}
+.paper .meta span{display:inline-block;text-align:center}
+.paper table{width:100%;border-collapse:collapse;table-layout:fixed;font-size:12px;font-weight:bold;text-align:center}
+.paper th,.paper td{border:1.5px solid #000;padding:7px 3px;vertical-align:middle;overflow-wrap:break-word;word-wrap:break-word;word-break:break-word;line-height:1.3}
+.paper th{font-size:12px;font-weight:bold;padding:7px 3px}
+
+.paper .col-date-from{width:11%}
+.paper .col-date-to{width:11%}
+.paper .col-route-from{width:16%}
+.paper .col-route-to{width:16%}
+.paper .col-distance{width:8%}
+.paper .col-mode{width:10%}
+.paper .col-purpose{width:18%}
+.paper .col-remarks{width:10%}
+
+.paper .submission{text-align:center;font-weight:bold;padding:6px 4px;border-top:1.5px solid #000;border-bottom:1.5px solid #000;font-size:13px}
+.paper .footer{border:0;display:grid;grid-template-columns:52% 48%;font-size:12px;padding:6px 10px 8px;min-height:72px;font-weight:bold}
+.paper .footer div{line-height:1.55}
+@media(max-width:760px){.grid{grid-template-columns:1fr 1fr}.entry-grid{grid-template-columns:1fr 1fr}.wide{grid-column:span 2}header{align-items:flex-start;gap:8px;flex-direction:column}}
+@media print{body{background:white}}
+</style>
+</head>
+<body>
+<header><h1>TOUR NOTE GENERATOR</h1><span>New form every time · PDF download · A4 landscape</span></header>
+<main>
+<section class="panel">
+<h2>Employee details</h2>
+<div class="grid">
+<div><label>NAME</label><input id="name" placeholder="e.g. Sarath V M"></div>
+<div><label>PEN NO</label><input id="pen" placeholder="e.g. 1000258"></div>
+<div><label>RANK &amp; GL NO</label><input id="rank" placeholder="e.g. PC 16600"></div>
+<div><label>COMPANY</label><input id="company" value="B COY MSP"></div>
+<div><label>BASIC PAY</label><input id="pay" type="number" placeholder="e.g. 32000"></div>
+<div><label>MONTH</label><select id="month">
+<option value="">Select month</option>
+<option>JANUARY</option><option>FEBRUARY</option><option>MARCH</option><option>APRIL</option><option>MAY</option><option>JUNE</option><option>JULY</option><option>AUGUST</option><option>SEPTEMBER</option><option>OCTOBER</option><option>NOVEMBER</option><option>DECEMBER</option>
+</select></div>
+<div><label>YEAR</label><input id="year" type="number" value="2026"></div>
+</div>
+</section>
+<section class="panel">
+<h2>Journey entries</h2>
+<p class="note">Add one row for each journey or halt period. For a halt entry, you can leave Route, Distance and Mode blank and enter the halt/duty location in the Route / Purpose fields as appropriate.</p>
+<div id="entries"></div>
+<div class="actions"><button class="secondary" type="button" onclick="addEntry()">＋ Add journey / halt</button></div>
+</section>
+<section class="panel">
+<h2>Submission details</h2>
+<div class="grid">
+<div><label>SUBMITTED TO</label><input id="submittedTo" value="THE OFFICER COMMANDING B COY"></div>
+<div><label>DATE</label><input id="submitDate" type="date"></div>
+<div><label>PLACE</label><input id="place" placeholder="Enter place"></div>
+</div>
+<div class="actions">
+<button class="primary" onclick="generatePDF()">Download PDF</button>
+<button class="secondary" onclick="window.print()">Print form</button>
+<button class="danger" onclick="resetForm()">Clear and start new</button>
+</div>
+<p class="note">Your entries are used only to create the PDF in this browser. This starter version does not save or upload personal details to a server. Download the PDF before closing or refreshing the page.</p>
+</section>
+</main>
+<div id="pdfArea"><div class="paper" id="paper"></div></div>
+<script>
+let count=0;
+function addEntry(data={}){
+ count++;
+ const wrap=document.createElement('div');wrap.className='entry';wrap.dataset.entry='1';
+ wrap.innerHTML=`<div class="entry-head"><span>Entry ${count}</span><button class="danger" type="button" onclick="this.closest('.entry').remove();renumber()">Remove</button></div>
+ <div class="entry-grid">
+ <div class="wide"><label>ENTRY TYPE</label><select class="entry-type" data-k="entryType" onchange="toggleEntryType(this)">
+ <option value="journey" ${data.entryType==='halt'?'':'selected'}>Journey</option>
+ <option value="halt" ${data.entryType==='halt'?'selected':''}>Halt &amp; Duty (merge Route From + To)</option>
+ </select></div>
+ <div><label>FROM DATE</label><input data-k="fromDate" type="date" value="${data.fromDate||''}"></div>
+ <div><label>FROM TIME</label><input data-k="fromTime" type="time" value="${data.fromTime||''}"></div>
+ <div><label>TO DATE</label><input data-k="toDate" type="date" value="${data.toDate||''}"></div>
+ <div><label>TO TIME</label><input data-k="toTime" type="time" value="${data.toTime||''}"></div>
+ <div data-role="routeFrom"><label>ROUTE FROM</label><input data-k="routeFrom" placeholder="Starting place" value="${esc(data.routeFrom||'')}"></div>
+ <div data-role="routeTo"><label>ROUTE TO</label><input data-k="routeTo" placeholder="Destination" value="${esc(data.routeTo||'')}"></div>
+ <div class="${data.entryType==='halt'?'':'hidden-field'}" data-role="haltLocation"><label>HALT / DUTY LOCATION</label><input data-k="haltLocation" placeholder="e.g. HALT AND DUTY AT KOZHIKODE CITY" value="${esc(data.haltLocation||'')}"></div>
+ <div><label>DISTANCE</label><input data-k="distance" placeholder="e.g. 50 KM" value="${esc(data.distance||'')}"></div>
+ <div><label>MODE OF CONVEYANCE</label><input data-k="mode" placeholder="e.g. D/V" value="${esc(data.mode||'')}"></div>
+ <div class="wide"><label>PURPOSE OF JOURNEY</label><input data-k="purpose" placeholder="Purpose of journey" value="${esc(data.purpose||'')}"></div>
+ <div class="wide"><label>REMARKS</label><input data-k="remarks" placeholder="e.g. R/J" value="${esc(data.remarks||'')}"></div>
+ </div>`;
+ document.getElementById('entries').appendChild(wrap);
+ toggleEntryType(wrap.querySelector('.entry-type'));
+ renumber();
+}
+function toggleEntryType(select){
+ const entry=select.closest('.entry');
+ const isHalt=select.value==='halt';
+ entry.querySelector('[data-role="routeFrom"]').classList.toggle('hidden-field',isHalt);
+ entry.querySelector('[data-role="routeTo"]').classList.toggle('hidden-field',isHalt);
+ entry.querySelector('[data-role="haltLocation"]').classList.toggle('hidden-field',!isHalt);
+}
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function renumber(){document.querySelectorAll('.entry-head span').forEach((e,i)=>e.textContent='Entry '+(i+1));}
+function val(id){return document.getElementById(id).value.trim();}
+function fmtDate(s){if(!s)return '';let [y,m,d]=s.split('-');return `${d}.${m}.${y}`;}
+function fmtTime(s){return s?s+' HRS':'';}
+function fmtSubmitDate(s){if(!s)return '';let [y,m,d]=s.split('-');return `${d}/${m}/${y}`;}
+function cell(s){return esc(s||'');}
+function generatePDF(){
+ const name=val('name'),pen=val('pen'),month=val('month'),year=val('year');
+ if(!name||!pen||!month||!year){alert('Please enter Name, PEN No, Month and Year.');return;}
+ const rows=[...document.querySelectorAll('.entry')].map(e=>{
+  const o={};e.querySelectorAll('[data-k]').forEach(i=>o[i.dataset.k]=i.value);
+  return o;
+ });
+ if(!rows.length){alert('Please add at least one journey entry.');return;}
+ const title=`TOURNOTE OF ${name.toUpperCase()} OF ${val('company').toUpperCase()} FOR THE MONTH OF ${month} ${year}`;
+ let body='';
+ rows.forEach(r=>{
+  const from=`${fmtDate(r.fromDate)}${r.fromTime?'<br>'+fmtTime(r.fromTime):''}`;
+  const to=`${fmtDate(r.toDate)}${r.toTime?'<br>'+fmtTime(r.toTime):''}`;
+  const routeCells = r.entryType==='halt'
+    ? `<td colspan="2">${cell(r.haltLocation)}</td>`
+    : `<td>${cell(r.routeFrom)}</td><td>${cell(r.routeTo)}</td>`;
+  body+=`<tr><td>${from}</td><td>${to}</td>${routeCells}<td>${cell(r.distance)}</td><td>${cell(r.mode)}</td><td>${cell(r.purpose)}</td><td>${cell(r.remarks)}</td></tr>`;
+ });
+ document.getElementById('paper').innerHTML=`
+ <h3>${cell(title)}</h3>
+ <div class="meta"><span>PEN : ${cell(pen)}</span><span>BASIC PAY : ${cell(val('pay'))}</span></div>
+ <table>
+ <colgroup>
+   <col class="col-date-from">
+   <col class="col-date-to">
+   <col class="col-route-from">
+   <col class="col-route-to">
+   <col class="col-distance">
+   <col class="col-mode">
+   <col class="col-purpose">
+   <col class="col-remarks">
+ </colgroup>
+ <thead>
+ <tr><th colspan="2">Dates &amp; Hours of journey &amp; Halt</th><th colspan="2">Route (Places)</th><th rowspan="2">Distance</th><th rowspan="2">Mode of<br>conveyance<br>used</th><th rowspan="2">Purpose of journey</th><th rowspan="2">Remarks</th></tr>
+ <tr><th>From</th><th>To</th><th>From</th><th>To</th></tr>
+ </thead>
+ <tbody>${body}</tbody>
+ </table>
+ <div class="submission">SUBMITTED TO ${cell(val('submittedTo'))} FOR FAVOUR FURTHER NECESSARY ACTION</div>
+ <div class="footer"><div>DATE : ${cell(fmtSubmitDate(val('submitDate')))}<br>PLACE : ${cell(val('place'))}</div><div>NAME : ${cell(name.toUpperCase())}<br>RANK &amp; GL NO : ${cell(val('rank'))}<br>PEN : ${cell(pen)}<br><b>${cell(val('company').toUpperCase())}</b></div></div>`;
+ const el=document.getElementById('paper');
+ const filename=`Tour_Note_${name.replace(/[^a-z0-9]/gi,'_')}_${month}_${year}.pdf`;
+ const opt={
+   margin:[12,12,12,12],
+   filename,
+   image:{type:'jpeg',quality:1},
+   html2canvas:{scale:2,useCORS:true,scrollX:0,scrollY:0,backgroundColor:'#ffffff'},
+   jsPDF:{unit:'mm',format:'a4',orientation:'landscape'},
+   pagebreak:{mode:['avoid-all','css','legacy']}
+ };
+ html2pdf().set(opt).from(el).save();
+}
+function resetForm(){
+ if(!confirm('Clear all details and start a new Tour Note?'))return;
+ document.querySelectorAll('input').forEach(i=>{if(i.id==='company')i.value='B COY MSP';else if(i.id==='submittedTo')i.value='THE OFFICER COMMANDING B COY';else if(i.id==='year')i.value=new Date().getFullYear();else i.value='';});
+ document.getElementById('month').value='';document.getElementById('entries').innerHTML='';count=0;addEntry();
+}
+addEntry();
+</script>
+<script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./service-worker.js").catch((error) => {
+      console.error("Service worker registration failed:", error);
+    });
+  });
+}
+</script>
+</body>
+</html>
