@@ -17,3 +17,5 @@ Notes:
 - This PWA caches the app shell so the page can reopen offline after the first successful visit.
 - The PDF library is loaded from cdnjs in the existing V11 code. PDF generation therefore still requires internet unless that library is separately bundled locally.
 - For GitHub Pages, keep all these files at the same site root and do not upload the ZIP itself.
+
+Version 12 change: The installed app display orientation is set to portrait. The generated Tour Note PDF remains A4 landscape.
